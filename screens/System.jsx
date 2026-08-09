@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -7,7 +7,6 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
 } from "react-native";
 
 import Map from "../components/Map";
@@ -20,7 +19,11 @@ import { HorizontalLine, VerticalLine, ConnectionDot } from '../components/Lines
 import PVChargerCard from "../components/PVChargerCard.jsx";
 import GlowingCard from '../components/GlowingCards.jsx';
 
-const { width: screenWidth } = Dimensions.get('window');
+// The tablet energy diagram (cards + connection lines) is laid out in a
+// fixed 968x435 design space and scaled as one unit to fit the screen,
+// so the hand-tuned line positions stay aligned on every device.
+const DIAGRAM_W = 968;
+const DIAGRAM_H = 435;
 
 const System = () => {
   const isTablet = useScreenSize();
@@ -29,36 +32,37 @@ const System = () => {
   const [showDetailedView, setShowDetailedView] = useState(false);
   const [batteryLevel, setBatteryLevel] = useState(12.5);
   const [refreshing, setRefreshing] = useState(false);
+  const [diagramArea, setDiagramArea] = useState(null);
+
+  const fetchVictronData = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      const data = await VictronEnergyService.getAllData();
+      setVictronData(data);
+      setEnergyError(null);
+
+      // Update battery level if available
+      if (data && data.battery && data.battery.voltage) {
+        setBatteryLevel(data.battery.voltage);
+      }
+    } catch (error) {
+      console.error("Failed to load Victron data:", error);
+      setEnergyError("Could not connect to the Victron system");
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   // Fetch Victron data when component mounts
   useEffect(() => {
-    const fetchVictronData = async () => {
-      try {
-        setRefreshing(true);
-        const data = await VictronEnergyService.getAllData();
-        setVictronData(data);
-        setEnergyError(null);
-        
-        // Update battery level if available
-        if (data && data.battery && data.battery.voltage) {
-          setBatteryLevel(data.battery.voltage);
-        }
-      } catch (error) {
-        console.error("Failed to load Victron data:", error);
-        setEnergyError("Could not connect to the Victron system");
-      } finally {
-        setRefreshing(false);
-      }
-    };
-
     fetchVictronData();
-    
+
     // Set up refresh interval
     const intervalId = setInterval(fetchVictronData, 10000); // Refresh every 10 seconds
-    
+
     // Clean up on unmount
     return () => clearInterval(intervalId);
-  }, []);
+  }, [fetchVictronData]);
   
   // Handle Victron panel error
   const handleEnergyError = (error) => {
@@ -70,6 +74,10 @@ const System = () => {
     setShowDetailedView(!showDetailedView);
   };
 
+
+  const diagramScale = diagramArea
+    ? Math.min(diagramArea.width / DIAGRAM_W, diagramArea.height / DIAGRAM_H)
+    : 1;
 
   // Tablet view with integrated Victron data
   if (isTablet) {
@@ -88,7 +96,18 @@ const System = () => {
         </View>
 
         {/* ————————————— DIAGRAM CONTAINER ————————————— */}
-        <View style={styles.diagramContainer}>
+        <View
+          style={styles.diagramArea}
+          onLayout={(e) => setDiagramArea(e.nativeEvent.layout)}
+        >
+          {diagramArea && (
+          <View
+            style={{
+              width: DIAGRAM_W * diagramScale,
+              height: DIAGRAM_H * diagramScale,
+            }}
+          >
+          <View style={[styles.diagramCanvas, { transform: [{ scale: diagramScale }] }]}>
           {/* ————————————— TOP ROW OF CARDS ————————————— */}
           <View style={styles.panelRow}>
             <GlowingCard glowColor="#D32F2F" style={styles.cardWrapper}>
@@ -203,6 +222,9 @@ const System = () => {
           <ConnectionDot top={346} left={647}></ConnectionDot>
 
           <HorizontalLine top={345} left={650} width={85}></HorizontalLine>
+          </View>
+          </View>
+          )}
         </View>
       </SafeAreaView>
     );
@@ -410,7 +432,7 @@ const System = () => {
             <Text style={styles.errorText}>{energyError}</Text>
             <TouchableOpacity 
               style={styles.retryButton}
-              onPress={() => window.location.reload()}
+              onPress={fetchVictronData}
             >
               <Text style={styles.retryText}>Retry Connection</Text>
             </TouchableOpacity>
@@ -449,8 +471,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 8,
   },
-  diagramContainer: {
-    bottom: 15,
+  diagramArea: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  diagramCanvas: {
+    width: DIAGRAM_W,
+    height: DIAGRAM_H,
+    transformOrigin: 'top left',
     position: 'relative',
   },
   panelRow: {
