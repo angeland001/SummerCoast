@@ -16,6 +16,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRVLights, useRVWater } from "../API/RVStateManager/RVStateHooks";
 import rvStateManager from "../API/RVStateManager/RVStateManager";
 import { LightControlService } from "../Service/LightControlService.js";
+import AddDeviceModal from "../components/AddDeviceModal.jsx";
+import CustomDeviceRow from "../components/CustomDeviceRow.jsx";
+import CustomDeviceStore from "../Service/CustomDeviceStore.js";
+import { useAuth } from "../context/AuthContext";
 
 import {
   Padding,
@@ -81,6 +85,9 @@ const Devices = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [isHeaterModalVisible, setHeaterModalVisible] = useState(false);
   const [isScheduleModalVisible, setScheduleModalVisible] = useState(false);
+  const [isAddDeviceVisible, setAddDeviceVisible] = useState(false);
+  const [customDevices, setCustomDevices] = useState([]);
+  const { deviceName } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
   // Use RV State Management hooks
@@ -295,6 +302,12 @@ const Devices = () => {
     setShowStatus(true);
     setTimeout(() => setShowStatus(false), duration);
   };
+
+  // Keep the custom device list in sync with the store
+  useEffect(() => {
+    const unsubscribe = CustomDeviceStore.subscribe(setCustomDevices);
+    return unsubscribe;
+  }, []);
 
   // Handle bathroom fan toggle with API integration
   const toggleBathroomFan = async () => {
@@ -557,6 +570,19 @@ const Devices = () => {
                 supportsDimming={supportsDimming}
               />
             ))}
+
+            {customDevices.length > 0 && (
+              <>
+                <Text style={styles.customDevicesTitle}>Custom Devices</Text>
+                {customDevices.map((device) => (
+                  <CustomDeviceRow
+                    key={device.id}
+                    device={device}
+                    onStatus={showStatusMessage}
+                  />
+                ))}
+              </>
+            )}
           </ScrollView>
         </>
       );
@@ -759,7 +785,7 @@ const Devices = () => {
         <View style={styles.headerContainer}>
           <Text style={styles.devices1}>Devices</Text>
         </View>
-        <Text style={styles.hiDrax}>Hi, Drax</Text>
+        <Text style={styles.hiDrax}>Hi, {deviceName || 'there'}</Text>
         <View>
           <View style={styles.tabContainer}>
             {Object.values(TABS).map((tab) => (
@@ -781,6 +807,9 @@ const Devices = () => {
         
         {/* Heater Control Modal */}
         <HeaterControlModal isVisible={isHeaterModalVisible} onClose={() => setHeaterModalVisible(false)} />
+
+        {/* Add Device Modal */}
+        <AddDeviceModal isVisible={isAddDeviceVisible} onClose={() => setAddDeviceVisible(false)} />
         
         {/* Status message */}
         {showStatus && (
@@ -791,7 +820,7 @@ const Devices = () => {
       </ScrollView>
       
       <View style={styles.buttonContainer} className="bg-brown py-5">
-        <TouchableOpacity style={styles.orangeButton}>
+        <TouchableOpacity style={styles.orangeButton} onPress={() => setAddDeviceVisible(true)}>
           <Text style={styles.orangeButtonText}>Add Device</Text>
         </TouchableOpacity>
       </View>
@@ -950,6 +979,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     top: 30,
     left: 10
+  },
+  customDevicesTitle: {
+    color: Color.white0,
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 16,
+    marginBottom: 6,
   },
   tabContainer: {
     flexDirection: "row",

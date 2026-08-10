@@ -3,6 +3,7 @@ import MainScreen from '../screens/MainScreen';
 import System from '../screens/System';
 import Settings from '../screens/Settings';
 import Vents from '../screens/Vents';
+import Devices from '../screens/Devices';
 import { View, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
 import LightScreenTablet from '../screens/LightScreenTablet';
@@ -24,6 +25,9 @@ const screenOptions = (route, color) => {
       break;
     case 'Vents':
       iconName = 'cloudo';
+      break;
+    case 'Devices':
+      iconName = 'appstore-o';
       break;
     case 'Victron':
       iconName = 'hdd'
@@ -68,6 +72,7 @@ const TabletTabs = () => {
         <Tab.Screen name="Lights" component={LightScreenTablet} />
         <Tab.Screen name="Air Conditioning" component={ClimateControl} />
         <Tab.Screen name="Vents" component={Vents}/>
+        <Tab.Screen name="Devices" component={Devices} />
         <Tab.Screen name="Victron" component={System} />
         <Tab.Screen name="Settings" component={Settings} />
       </Tab.Navigator>
