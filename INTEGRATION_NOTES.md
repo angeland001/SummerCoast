@@ -9,6 +9,7 @@ also works in this order:
   -> alireza/responsive   responsive fixes + screen bugs
     -> alireza/auth       device authentication (app + server module)
       -> alireza/add-device  custom device support
+        -> alireza/live-gps  live GPS tracking
 ```
 
 ## 1. alireza/responsive
@@ -56,6 +57,19 @@ also works in this order:
   (latch C8 / dimmable FA). The modal previews the exact CAN frame
   before saving.
 - Devices screen added as a tablet tab (it was phone-only before).
+
+## 4. alireza/live-gps
+
+- The map now tracks continuously instead of taking one position at
+  mount, so it follows the RV while driving. Tapping the map tile opens
+  a full-screen Live Location view with coordinates, speed, heading,
+  altitude, GPS accuracy and fix age.
+- Permission denials and GPS failures are shown in the UI with a retry
+  instead of being logged to the console, and the tile reports honestly
+  when it is still acquiring rather than implying the RV is parked.
+- Not in either person's list in Task_Update.md, but it is task 4 of the
+  six in the original handoff document - worth confirming with the team
+  that nobody else has it in progress.
 
 ## Testing
 
