@@ -1,11 +1,9 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MainScreen from '../screens/MainScreen';
 import System from '../screens/System';
-import AirCon from '../screens/AirCon';
 import Settings from '../screens/Settings';
 import Vents from '../screens/Vents';
 import { View, StyleSheet } from 'react-native';
-import { Image } from 'react-native-svg';
 import Icon from 'react-native-vector-icons/AntDesign';
 import LightScreenTablet from '../screens/LightScreenTablet';
 import ClimateControl from '../screens/ClimateControlScreenTablet';
@@ -18,8 +16,8 @@ const screenOptions = (route, color) => {
     case 'Home':
       iconName = 'home';
       break;
-    case 'System':
-      iconName = 'barchart';
+    case 'Lights':
+      iconName = 'bulb1';
       break;
     case 'Air Conditioning':
       iconName = 'API';
@@ -50,7 +48,7 @@ const screenOptions = (route, color) => {
 
 const TabletTabs = () => {
   return (
-    <View style={styles.container}>  {/* Wrapper to add padding around the navigator */}
+    <View style={styles.container}>
       <Tab.Navigator
   screenOptions={({ route }) => ({
     tabBarStyle: styles.tabBar,
@@ -67,7 +65,7 @@ const TabletTabs = () => {
 >
 
         <Tab.Screen name="Home" component={MainScreen} />
-        <Tab.Screen name="System" component={LightScreenTablet} />
+        <Tab.Screen name="Lights" component={LightScreenTablet} />
         <Tab.Screen name="Air Conditioning" component={ClimateControl} />
         <Tab.Screen name="Vents" component={Vents}/>
         <Tab.Screen name="Victron" component={System} />
@@ -81,7 +79,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 10, // Add space on the sides
-    paddingBottom: -10, // Add space at the bottom
     backgroundColor: '#000', // Optional background color
   },
   tabBar: {

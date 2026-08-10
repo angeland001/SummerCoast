@@ -209,8 +209,9 @@ const TankHeaterControl = ({ name, tankType, trackColor }) => {
   // This preserves the original UI while adding real-time data
   if (isTablet) {
     return (
-      <View className="flex-row justify-center items-center py-4" style={{ marginHorizontal: 8 }}> {/* Added spacing between tanks */}
-        <View className="items-center" style={{ minHeight: 180 }}> {/* Reduced height since no toggle */}
+      <View className="flex-row justify-center items-center py-4" style={{ marginHorizontal: 8 }}>
+        {/* Reduced height since no toggle */}
+        <View className="items-center" style={{ minHeight: 180 }}>
           <View className="flex-row items-center mb-2">
             <Text className="text-white text-lg font-semibold">{name}</Text>
             <Text style={{ color: connectionStatus.color, marginLeft: 8, fontSize: 16 }}>
@@ -258,7 +259,8 @@ const TankHeaterControl = ({ name, tankType, trackColor }) => {
 
   return (
     <View className="flex-row justify-between py-2">
-      <View className="items-center" style={{ minHeight: 120 }}> {/* Reduced height */}
+      {/* Reduced height */}
+      <View className="items-center" style={{ minHeight: 120 }}>
         <Text className="text-white">{percentage}%</Text>
         <VerticalSlider
           value={percentage}
@@ -290,7 +292,8 @@ const TankHeaterControl = ({ name, tankType, trackColor }) => {
         )}
       </View>
       
-      <View className="flex-row mt-10" style={{ alignItems: 'flex-start' }}> {/* Align to top */}
+      {/* Align to top */}
+      <View className="flex-row mt-10" style={{ alignItems: 'flex-start' }}>
         <View className="flex-row items-center">
           <Text className="text-white text-lg mr-2">{name}</Text>
           <Text style={{ color: connectionStatus.color, fontSize: 14 }}>

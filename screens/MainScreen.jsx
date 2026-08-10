@@ -384,10 +384,7 @@ const MainScreen = () => {
                         >
                             Wifi
                         </Text>
-                        <Pressable onPress={() => setModalVisible(true)}>
                         <ModalComponent nameComponent="Wifi" />
-
-                        </Pressable>
                         
                     </Row>
                 </Col>

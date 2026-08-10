@@ -511,19 +511,19 @@ const ClimateControlScreenTablet = () => {
   };
 
   // Handle fan speed button press with RV state management
-  const handleFanSpeedPress = async (speed) => {
+  const handleFanSpeedPress = async (newSpeed) => {
     setIsLoading(true);
     const previousSpeed = speed;
     
     try {
       // Update RV state first for immediate UI feedback
-      rvStateManager.updateClimateState({ 
-        fanSpeed: speed,
-        autoMode: speed === "Auto",
+      rvStateManager.updateClimateState({
+        fanSpeed: newSpeed,
+        autoMode: newSpeed === "Auto",
         lastUpdated: new Date().toISOString()
       });
-      setSpeed(speed);
-      if (speed === "Auto") {
+      setSpeed(newSpeed);
+      if (newSpeed === "Auto") {
         setIsAutoModeActive(true);
       } else {
         setIsAutoModeActive(false);
@@ -531,7 +531,7 @@ const ClimateControlScreenTablet = () => {
       
       let result;
       
-      switch (speed) {
+      switch (newSpeed) {
         case "Low":
           // Use the direct raw command approach that's working
           result = await setLowFanSpeed();
@@ -547,20 +547,20 @@ const ClimateControlScreenTablet = () => {
           result = await setAutoMode();
           break;
         default:
-          setErrorMessage(`Unknown fan speed: ${speed}`);
+          setErrorMessage(`Unknown fan speed: ${newSpeed}`);
           setIsLoading(false);
           return;
       }
       
       if (result && result.success) {
         // Store the selected fan speed and auto mode state
-        await AsyncStorage.setItem('fanSpeed', speed);
-        await AsyncStorage.setItem('autoModeState', JSON.stringify(speed === "Auto"));
+        await AsyncStorage.setItem('fanSpeed', newSpeed);
+        await AsyncStorage.setItem('autoModeState', JSON.stringify(newSpeed === "Auto"));
         
         setErrorMessage(null);
         
         // Add status message
-        setStatusMessage(`Fan speed set to ${speed}`);
+        setStatusMessage(`Fan speed set to ${newSpeed}`);
         setShowStatus(true);
         setTimeout(() => setShowStatus(false), 3000);
       } else if (result) {
@@ -574,7 +574,7 @@ const ClimateControlScreenTablet = () => {
         setIsAutoModeActive(previousSpeed === "Auto");
         
         setErrorMessage(`Error setting fan speed: ${result.error}`);
-        setStatusMessage(`Failed to set fan speed to ${speed}`);
+        setStatusMessage(`Failed to set fan speed to ${newSpeed}`);
         setShowStatus(true);
         setTimeout(() => setShowStatus(false), 3000);
       }
@@ -892,7 +892,7 @@ const ClimateControlScreenTablet = () => {
               }}
             >
               {/* Truma Logo and Auxiliary Box */}
-              <View style={{ width: "50%", height: "100px", alignItems: "center" }}>
+              <View style={{ width: "50%", alignItems: "center" }}>
                 <Image
                   source={require("../assets/truma-logo-333-100.png")}
                   className="h-30 w-30 left-3"
@@ -904,7 +904,7 @@ const ClimateControlScreenTablet = () => {
                   <Col
                     style={{
                       width: 380,
-                      height: 270,
+                      minHeight: 300,
                       backgroundColor: "#1B1B1B",
                       borderRadius: 10,
                       justifyContent: "flex-start",
@@ -1247,7 +1247,6 @@ const styles = StyleSheet.create({
   },
   fanSpeedContainer: {
     width: 80,
-    height: 150, // Height limit for the container
     backgroundColor: 'rgba(0,0,0,0.2)',
     borderRadius: 5,
     overflow: 'hidden',
