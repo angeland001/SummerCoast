@@ -1,0 +1,6 @@
+# Runtime state and secrets - never commit these.
+# auth.js writes auth-config.json with default PINs on first start;
+# the real PINs live only on the Pi. Defaults are documented in
+# AUTH_INTEGRATION.md.
+auth-config.json
+auth-tokens.json

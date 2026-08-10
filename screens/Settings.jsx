@@ -4,6 +4,7 @@ import GroupComponent from '../components/GroupComponent';
 import ToggleSwitch from '../components/ToggleSwitch.jsx';
 import { Color, Gap, FontSize, FontFamily, isDarkMode } from '../GlobalStyles';
 import { useScreenSize, handleSettingsToggle, handleSettingsItemPress } from '../helper';
+import { useAuth } from '../context/AuthContext';
 import moment from 'moment';
 import { router } from 'expo-router';
 
@@ -11,7 +12,8 @@ import { router } from 'expo-router';
 const Settings = () => {
   const isTablet = useScreenSize();
   const isDark = isDarkMode;
-  const [username, setUsername] = useState('Guest User');
+  const { deviceName, permission, logout } = useAuth();
+  const [username, setUsername] = useState(deviceName || 'Guest User');
   const [toggles, setToggles] = useState({
     pushNotifications: false,
     notifyMessages: true,
@@ -89,6 +91,13 @@ const Settings = () => {
   ];
 
   const handleItemPress = (item) => {
+    if (item.key === 'signOut') {
+      Alert.alert('Sign Out', 'Sign this device out of the RV?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign Out', style: 'destructive', onPress: () => logout() },
+      ]);
+      return;
+    }
     handleSettingsItemPress(item, Alert.alert, router);
   };
 
@@ -163,7 +172,7 @@ const Settings = () => {
                   {username}
                 </Text>
                 <Text style={[styles.tabletProfileEmail, { color: isDark ? Color.colorGray_100 : Color.colorGray_100 }]}>
-                  guest@coastapp.com
+                  {permission ? `Signed in as ${permission}` : 'Not signed in'}
                 </Text>
               </View>
               <TouchableOpacity style={styles.tabletProfileEditButton}>

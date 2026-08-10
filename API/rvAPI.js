@@ -10,6 +10,24 @@ const api = axios.create({
   timeout: 15000, // 5 second timeout
 });
 
+// Attach or clear the bearer token for every later request.
+// Called by AuthService on login, session restore and logout.
+export const setAuthToken = (token) => {
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common['Authorization'];
+  }
+};
+
+// Point the client at a different server (the login screen lets the
+// user change the Pi's address without rebuilding the app).
+export const setServerHost = (host) => {
+  const base = `http://${host}:3000/api`;
+  api.defaults.baseURL = base;
+  RVControlService.baseURL = base;
+};
+
 // API service for RV Control
 export const RVControlService = {
   // Get all available commands

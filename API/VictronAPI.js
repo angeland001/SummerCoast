@@ -29,6 +29,20 @@ const api = axios.create({
 // Log configuration on startup
 console.log(`VictronAPI configured with baseURL: ${api.defaults.baseURL}`);
 
+// Follow a server address change (see rvAPI.setServerHost).
+export const setVictronHost = (host) => {
+  api.defaults.baseURL = `http://${host}:3000/api/victron`;
+};
+
+// Attach or clear the bearer token (see AuthService).
+export const setVictronAuthToken = (token) => {
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common['Authorization'];
+  }
+};
+
 /**
  * API client for Victron Energy integration
  */
@@ -215,7 +229,13 @@ export const VictronAPI = {
       console.log('Victron API is available');
       return true;
     } catch (error) {
-      console.error('Victron API is not available:', error.message);
+      if (error.response && error.response.status === 401) {
+        // Expected before login finishes - AuthContext re-initializes
+        // the service once the session token is in place.
+        console.log('Victron API waiting for authentication');
+      } else {
+        console.error('Victron API is not available:', error.message);
+      }
       return false;
     }
   }
