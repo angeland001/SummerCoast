@@ -25,6 +25,17 @@ const EnergyFlowDiagram = ({ energyData }) => {
   const powerLabel = (watts) => (watts === 0 ? '--W' : `${Math.abs(watts)}W`);
   const isBatteryCharging = battery.current > 0;
 
+  // Display formatting: the data source produces unrounded floats
+  // (e.g. 80.89999999999995), so round at display time only.
+  // SOC can arrive as 0-1 (real Victron) or 0-100 (simulation) — normalize.
+  const socLabel = (() => {
+    const soc = battery.soc || 0;
+    const pct = soc <= 1 ? soc * 100 : soc;
+    return pct.toFixed(1);
+  })();
+  const voltageLabel = Number(battery.voltage || 0).toFixed(1);
+  const currentLabel = Number(battery.current || 0).toFixed(1);
+
   // Animation progress shared value
   const flowProgress = useSharedValue(0);
 
@@ -111,8 +122,8 @@ const EnergyFlowDiagram = ({ energyData }) => {
             ry="5"
             fill={isBatteryCharging ? "#4CAF50" : "#FFC107"}
           />
-          <SvgText x="150" y="170" textAnchor="middle" fill="black" fontWeight="bold" fontSize="10">{battery.soc}%</SvgText>
-          <SvgText x="150" y="185" textAnchor="middle" fill="black" fontSize="9">{battery.voltage}V {battery.current}A</SvgText>
+          <SvgText x="150" y="170" textAnchor="middle" fill="black" fontWeight="bold" fontSize="10">{socLabel}%</SvgText>
+          <SvgText x="150" y="185" textAnchor="middle" fill="black" fontSize="9">{voltageLabel}V {currentLabel}A</SvgText>
 
           {/* Lines */}
           <Line x1="90" y1="30" x2="120" y2="80" stroke="#4CAF50" strokeWidth="2" />

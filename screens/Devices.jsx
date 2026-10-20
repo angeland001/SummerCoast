@@ -5,6 +5,7 @@ import SimpleHoldToDimLight from "../components/SimpleHoldToDimLight.jsx";
 import useScreenSize from "../helper/useScreenSize.jsx";
 import AwningControlModal from "../components/AwningControlModal";
 import HeaterControlModal from "../components/HeaterControlModal";
+import ScheduleLightsModal from "../components/ScheduleLightsModal";
 import { LightService, FanService, WaterService } from "../API/RVControlServices"; 
 import MasterLightControl from "../components/MasterLightControl.jsx";
 import { Feather as Icon } from '@expo/vector-icons';
@@ -81,6 +82,7 @@ const Devices = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [isHeaterModalVisible, setHeaterModalVisible] = useState(false);
   const [isScheduleModalVisible, setScheduleModalVisible] = useState(false);
+  const [isScheduleLightsModalVisible, setScheduleLightsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   // Use RV State Management hooks
@@ -781,7 +783,10 @@ const Devices = () => {
         
         {/* Heater Control Modal */}
         <HeaterControlModal isVisible={isHeaterModalVisible} onClose={() => setHeaterModalVisible(false)} />
-        
+
+        {/* Schedule Lights Modal */}
+        <ScheduleLightsModal isVisible={isScheduleLightsModalVisible} onClose={() => setScheduleLightsModalVisible(false)} />
+
         {/* Status message */}
         {showStatus && (
           <View style={styles.statusContainer}>
@@ -791,6 +796,12 @@ const Devices = () => {
       </ScrollView>
       
       <View style={styles.buttonContainer} className="bg-brown py-5">
+        <TouchableOpacity
+          style={styles.whiteButton}
+          onPress={() => setScheduleLightsModalVisible(true)}
+        >
+          <Text style={styles.whiteButtonText}>Schedule Lights</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.orangeButton}>
           <Text style={styles.orangeButtonText}>Add Device</Text>
         </TouchableOpacity>

@@ -9,7 +9,9 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
-  Platform 
+  Platform,
+  ScrollView,
+  RefreshControl
 } from "react-native";
 import {
   Color,
@@ -21,6 +23,8 @@ import {
   isDarkMode
 } from "../GlobalStyles";
 import { useScreenSize, getWeatherIcon, fetchHourlyWeather, formatWeatherItem } from "../helper";
+import { fetchHourlyWeatherByCoords } from "../helper/weather/weatherHelpers";
+import * as Location from "expo-location";
 import AirCon from "./AirCon.jsx";
 import ToggleSwitch from "../components/ToggleSwitch.jsx";
 
@@ -34,6 +38,9 @@ const Home = () => {
   const [isEnergyMode, setIsEnergyMode] = useState(false);
   const [currentTemp, setCurrentTemp] = useState(73);
   const [humidity, setHumidity] = useState(36);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [locationName, setLocationName] = useState("Chattanooga, TN");
 
   const toggleAirCon = () => {
     setShowAirCon(!showAirCon);
@@ -51,25 +58,79 @@ const Home = () => {
     );
   };
 
-  useEffect(() => {
-    const loadWeatherData = async () => {
-      try {
-        const weatherData = await fetchHourlyWeather("Chattanooga", isTablet);
-        setHourlyWeather(weatherData);
-        
-        // Set weather condition for the first forecast
-        if (weatherData.length > 0) {
-          setWeatherCondition(weatherData[0].weather[0].description);
-        }
-      } catch (error) {
-        console.error("Error fetching weather data:", error);
-        // Set fallback data
-        setHourlyWeather([]);
-        setWeatherCondition('partly cloudy');
-      }
-    };
+  // Weather loading lives outside useEffect so both the 30-minute timer
+  // and pull-to-refresh can call it.
+  // Tries GPS-based weather first, falls back to Chattanooga if GPS fails.
+  const loadWeatherData = async () => {
+    setRefreshing(true);
 
+    try {
+      let weatherData;
+
+      try {
+        // Ask for location permission and get current GPS position
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          throw new Error('Location permission not granted');
+        }
+
+        const position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+
+        const { forecasts, locationName: cityName } = await fetchHourlyWeatherByCoords(
+          position.coords.latitude,
+          position.coords.longitude,
+          isTablet
+        );
+
+        weatherData = forecasts;
+        setLocationName(cityName);
+      } catch (gpsError) {
+        // Permission denied or GPS unavailable — fall back to hardcoded city
+        console.warn("GPS weather unavailable, falling back to Chattanooga:", gpsError.message);
+        weatherData = await fetchHourlyWeather("Chattanooga", isTablet);
+        setLocationName("Chattanooga, TN");
+      }
+
+      setHourlyWeather(weatherData);
+
+      const updateTime = new Date().toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+
+      setLastUpdated(updateTime);
+      console.log("Weather refreshed at:", updateTime);
+
+      // Set weather condition for the first forecast
+      if (weatherData.length > 0) {
+        setWeatherCondition(weatherData[0].weather[0].description);
+      }
+    } catch (error) {
+      console.error("Error fetching weather data:", error);
+      // Set fallback data
+      setHourlyWeather([]);
+      setWeatherCondition('partly cloudy');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     loadWeatherData();
+
+    // 30 minutes. For testing, temporarily set to 10 * 1000 (10 seconds)
+    // and confirm the "Updated" time changes — then change it back.
+    const WEATHER_REFRESH_INTERVAL = 30 * 60 * 1000;
+
+    const weatherTimer = setInterval(() => {
+      loadWeatherData();
+    }, WEATHER_REFRESH_INTERVAL);
+
+    return () => {
+      clearInterval(weatherTimer);
+    };
   }, [isTablet]);
 
   if (isTablet) {
@@ -107,14 +168,27 @@ const Home = () => {
         />
       </View>
 
-      {/* Main Content */}
-      <View style={styles.contentContainer}>
-        {/* Weather Forecast Section */}
-        <View style={styles.weatherContainer}>
-          <View style={styles.weatherHeader}>
-            <Text style={styles.weatherTitle}>Hourly Forecast</Text>
-            <Text style={styles.locationText}>Chattanooga, TN</Text>
-          </View>
+      {/* Main Content — ScrollView enables pull-to-refresh */}
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={loadWeatherData}
+            tintColor="#FFB267"
+            colors={["#FFB267"]}
+            progressBackgroundColor="#1a1a1a"
+          />
+        }
+      >
+        <View style={styles.contentContainer}>
+          {/* Weather Forecast Section */}
+          <View style={styles.weatherContainer}>
+            <View style={styles.weatherHeader}>
+              <Text style={styles.weatherTitle}>Hourly Forecast</Text>
+              <Text style={styles.locationText}>{locationName}</Text>
+            </View>
           
           {hourlyWeather.length > 0 ? (
             <FlatList
@@ -180,6 +254,7 @@ const Home = () => {
 
 
       </View>
+      </ScrollView>
 
       {/* Air Con Modal Overlay */}
       {showAirCon && (
@@ -217,12 +292,20 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   
-  contentContainer: {
+  scrollArea: {
     flex: 1,
+    zIndex: 2,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'flex-end',
+  },
+
+  contentContainer: {
     paddingHorizontal: 16,
     paddingBottom: 20,
-    zIndex: 2,
+    paddingTop: height * 0.42,
   },
   
   // Weather Section

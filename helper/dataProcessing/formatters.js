@@ -32,11 +32,17 @@ export const formatGridPower = (victronData) => {
 /**
  * Get battery state of charge as percentage
  * @param {Object} victronData - Victron energy data
- * @returns {number} - Battery SOC percentage
+ * @returns {string} - Battery SOC percentage formatted to one decimal place
  */
 export const getBatterySOC = (victronData) => {
-  if (!victronData || !victronData.battery) return 0;
-  return Math.round(victronData.battery.soc * 100);
+  const soc = victronData?.battery?.soc ?? 0;
+  const pct = soc <= 1 ? soc * 100 : soc;
+
+  if (!Number.isFinite(pct)) {
+    return "0.0";
+  }
+
+  return pct.toFixed(1);
 };
 
 /**
@@ -130,7 +136,7 @@ export const formatEnergy = (energy) => {
     return `${(energy * 1000).toFixed(0)}Wh`;
   }
   
-  return `${energy.toFixed(1)}kWh`;
+  return `${energy.toFixed(2)}kWh`;
 };
 
 /**
